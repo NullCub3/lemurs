@@ -63,7 +63,7 @@
         , ...
         }:
         let
-          sessionData = config.services.xserver.displayManager.sessionData;
+          sessionData = config.services.displayManager.sessionData.desktops.outPath;
         in
         {
           options.services.lemurs = rec {
@@ -143,9 +143,9 @@
 
                 serviceConfig = {
                   ExecStart = ''
-                    ${pkgs.lemurs}/bin/lemurs                      \
-                      --xsessions  ${cfg.x11.xsessions}            \
-                      --wlsessions ${cfg.wayland.wayland-sessions}
+                    ${pkgs.lemurs}/bin/lemurs \
+                      --xsessions  ${cfg.settings.x11.xsessions} \
+                      --wlsessions ${cfg.settings.wayland.wayland-sessions}
                   '';
 
                   StandardInput = "tty";
