@@ -1,10 +1,13 @@
 {
-  description = "A flake to build a Rust project to WASM";
+  description = "Lemurs: A customizable TUI display/login manager written in Rust";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, utils, rust-overlay }:
@@ -47,6 +50,7 @@
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
               linux-pam
+              rustToolchain
             ];
           };
         }
