@@ -39,7 +39,7 @@
           devShells = {
             default = pkgs.mkShell {
               packages = with pkgs; [
-                linux-pam
+                pam
                 nixpkgs-fmt
                 rustToolchain
               ];
