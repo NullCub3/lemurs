@@ -47,9 +47,22 @@
           };
         }
       ) // {
+
+      overlays = rec {
+        default = lemurs;
+        lemurs = final: prev: {
+          lemurs = self.packages.${final.system}.lemurs;
+        };
+      };
+
       nixosModules = rec {
         default = lemurs;
-        lemurs = import ./nix/lemurs-module.nix;
+        # lemurs = import ./nix/lemurs-module.nix;
+        lemurs.imports = [
+          { nixpkgs.overlays = [ self.overlays.lemurs ]; }
+          ./nix/lemurs-module.nix
+        ];
       };
+
     };
 }

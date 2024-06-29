@@ -46,10 +46,6 @@ in
       cfg = config.services.lemurs;
     in
     lib.mkIf cfg.enable {
-      # nixpkgs.overlays = [
-      #   (final: prev: { lemurs = self.packages.x86_64-linux.default; })
-      # ];
-
       security.pam.services.lemurs = {
         allowNullPassword = true;
         startSession = true;
