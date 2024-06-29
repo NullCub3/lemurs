@@ -1,5 +1,6 @@
 { lib
 , pkgs
+, linux-pam
 , packageName
 , rustPlatform
 }:
@@ -9,14 +10,14 @@ rustPlatform.buildRustPackage {
 
   src = ./..;
 
-  postPatch = ''
-    substituteInPlace ./extra/config.toml --replace "/bin/sh" "${pkgs.bash}/bin/bash"
-    substituteInPlace ./extra/config.toml --replace "/usr/bin/X" "${pkgs.xorg.xorgserver}/bin/X"
-    substituteInPlace ./extra/config.toml --replace "/usr/bin/xauth" "${pkgs.xorg.xauth}/bin/xauth"
-  '';
+  # postPatch = ''
+  #   substituteInPlace ./extra/config.toml --replace "/bin/sh" "${pkgs.bash}/bin/bash"
+  #   substituteInPlace ./extra/config.toml --replace "/usr/bin/X" "${pkgs.xorg.xorgserver}/bin/X"
+  #   substituteInPlace ./extra/config.toml --replace "/usr/bin/xauth" "${pkgs.xorg.xauth}/bin/xauth"
+  # '';
 
   buildInputs = [
-    pkgs.linux-pam
+    linux-pam
   ];
 
   cargoHash = "sha256-rJLHfedg4y8cZH77AEA4AjE0TvWf9tdSjKiHZfvW+gw=";
