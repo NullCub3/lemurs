@@ -2,7 +2,7 @@
   description = "Lemurs: A customizable TUI display/login manager written in Rust";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
@@ -32,7 +32,7 @@
           packages = {
             default = packages.lemurs;
             lemurs = pkgs.callPackage ./nix/lemurs.nix {
-              inherit pkgs packageName rustPlatform;
+              inherit packageName rustPlatform;
             };
           };
 
