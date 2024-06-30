@@ -9,12 +9,6 @@ rustPlatform.buildRustPackage {
 
   src = ./..;
 
-  # postPatch = ''
-  #   substituteInPlace ./extra/config.toml --replace "/bin/sh" "${pkgs.bash}/bin/bash"
-  #   substituteInPlace ./extra/config.toml --replace "/usr/bin/X" "${pkgs.xorg.xorgserver}/bin/X"
-  #   substituteInPlace ./extra/config.toml --replace "/usr/bin/xauth" "${pkgs.xorg.xauth}/bin/xauth"
-  # '';
-
   buildInputs = [
     pam
   ];
