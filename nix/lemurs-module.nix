@@ -27,8 +27,7 @@ in
       type = types.int;
       default = 2;
       description = ''
-        The TTY number that will be used by lemurs
-        This value will be converted into tty''${cfg.tty}
+        The tty which contains lemurs.
       '';
     };
 
@@ -39,7 +38,8 @@ in
       # but I wasn't sure of a great way to have that work properly
       # default = config.users.defaultUserShell;
       description = ''
-        The shell that lemurs uses
+        Path to system shell that gets used to execute linux commands.
+        In almost all cases, this should refer to a bash shell.
       '';
     };
 
@@ -113,6 +113,7 @@ in
         (cfg.extraSettings)
         {
           # Map module options to lemurs' config.toml format
+          # Also, in general, dirty hack
           tty = cfg.tty;
           system_shell = cfg.shell;
           x11 =
