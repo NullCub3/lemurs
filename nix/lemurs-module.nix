@@ -153,6 +153,11 @@ in
         login.setLoginUid = false;
       };
 
+      environment.sessionVariables = {
+        XDG_SEAT = "seat0";
+        XDG_VTNR = "${toString cfg.tty}";
+      };
+
       services.displayManager = {
         enable = mkDefault true;
       };
