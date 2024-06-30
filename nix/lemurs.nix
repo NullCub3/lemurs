@@ -1,6 +1,6 @@
 { lib
 , pkgs
-, linux-pam
+, pam
 , packageName
 , rustPlatform
 }:
@@ -17,7 +17,7 @@ rustPlatform.buildRustPackage {
   # '';
 
   buildInputs = [
-    linux-pam
+    pam
   ];
 
   cargoHash = "sha256-rJLHfedg4y8cZH77AEA4AjE0TvWf9tdSjKiHZfvW+gw=";
