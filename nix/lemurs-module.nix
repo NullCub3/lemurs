@@ -9,6 +9,7 @@ let
     mkEnableOption
     mkOption
     types
+    mkIf
     ;
 in
 {
@@ -19,20 +20,29 @@ in
     wayland.enable = mkEnableOption "Enable the Wayland part of the Lemurs Display Manager";
 
     tty = mkOption {
+      type = types.int;
+      default = 2;
+    };
+
+    shell = mkOption {
       type = types.str;
-      default = "tty2";
+      default = "${pkgs.bash}/bin/bash";
+      # default = config.users.defaultUserShell;
+      description = ''
+        The shell that lemurs uses to run commands
+      '';
     };
 
     settings = {
       x11 = {
         xauth = mkOption {
-          type = types.nullOr types.package;
-          default = if x11.enable then pkgs.xorg.xauth else null;
+          type = with types; nullOr package;
+          default = if cfg.x11.enable then pkgs.xorg.xauth else null;
         };
 
         xorgserver = mkOption {
-          type = types.nullOr types.package;
-          default = if x11.enable then pkgs.xorg.xorgserver else null;
+          type = with types; nullOr package;
+          default = if cfg.x11.enable then pkgs.xorg.xorgserver else null;
         };
 
         xsessions = mkOption {
@@ -68,57 +78,90 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    security.pam.services.lemurs = {
-      allowNullPassword = true;
-      startSession = true;
-      setLoginUid = false;
-      enableGnomeKeyring = mkDefault config.services.gnome.gnome-keyring.enable;
-    };
+  config =
+    let
+      lemursConfig = lib.recursiveUpdate defaultConfig (lib.recursiveUpdate
+        (cfg.extraSettings)
+        {
+          tty = cfg.tty;
+          system_shell = cfg.shell;
+          x11 =
+            if cfg.x11.enable then {
+              xauth_path = "${cfg.settings.x11.xauth}/bin/xauth";
+              xserver_path = "${cfg.settings.x11.xorgserver}/bin/X";
+              xsessions_path = cfg.x11.settings.xsessions;
+            } else { };
+          wayland =
+            if cfg.wayland.enable then {
+              wayland_sessions_path = cfg.settings.wayland.wayland-sessions;
+            } else { };
+        });
 
-    services.displayManager = {
-      enable = mkDefault true;
-    };
-
-    systemd.defaultUnit = "graphical.target";
-    systemd.services = {
-      "autovt@${cfg.tty}".enable = false;
-
-      lemurs = {
-        aliases = [ "display-manager.service" ];
-
-        unitConfig = {
-          Wants = [
-            "systemd-user-sessions.service"
-          ];
-
-          After = [
-            "systemd-user-sessions.service"
-            "plymouth-quit-wait.service"
-            "getty@${cfg.tty}.service"
-          ];
-
-          Conflicts = [
-            "getty@${cfg.tty}.service"
-          ];
-        };
-
-        serviceConfig = {
-          ExecStart = ''
-            ${pkgs.lemurs}/bin/lemurs \
-              --xsessions  ${cfg.settings.x11.xsessions} \
-              --wlsessions ${cfg.settings.wayland.wayland-sessions}
-          '';
-          StandardInput = "tty";
-          TTYPath = "/dev/${cfg.tty}";
-          TTYReset = "yes";
-          TTYVHangup = "yes";
-          Type = "idle";
-        };
-        restartIfChanged = false;
-        wantedBy = [ "graphical.target" ];
+      tty = "tty${builtins.toString (cfg.tty)}";
+    in
+    lib.mkIf cfg.enable {
+      security.pam.services.lemurs = {
+        allowNullPassword = true;
+        startSession = true;
+        setLoginUid = false;
+        enableGnomeKeyring = mkDefault config.services.gnome.gnome-keyring.enable;
       };
-    };
 
-  };
+      services.displayManager = {
+        enable = mkDefault true;
+      };
+
+      environment.etc = {
+        "lemurs/config.toml" = {
+          source = (settingsFormat.generate "lemurs-config.toml" lemursConfig);
+          mode = "0644";
+        };
+      };
+
+      systemd.defaultUnit = "graphical.target";
+      systemd.services = {
+        "autovt@${tty}".enable = false;
+
+        lemurs = {
+          aliases = [ "display-manager.service" ];
+
+          unitConfig = {
+            Wants = [
+              "systemd-user-sessions.service"
+            ];
+
+            After = [
+              "systemd-user-sessions.service"
+              "plymouth-quit-wait.service"
+              "getty@${tty}.service"
+            ];
+
+            Conflicts = [
+              "getty@${tty}.service"
+            ];
+
+            path = [
+              # pkgs.systemd
+              # pkgs.coreutils
+            ];
+          };
+
+          serviceConfig = {
+            ExecStart = ''
+              ${pkgs.lemurs}/bin/lemurs \
+                --xsessions  ${cfg.settings.x11.xsessions} \
+                --wlsessions ${cfg.settings.wayland.wayland-sessions}
+            '';
+            StandardInput = "tty";
+            TTYPath = "/dev/${tty}";
+            TTYReset = "yes";
+            TTYVHangup = "yes";
+            Type = "idle";
+          };
+          restartIfChanged = false;
+          wantedBy = [ "graphical.target" ];
+        };
+      };
+
+    };
 }
