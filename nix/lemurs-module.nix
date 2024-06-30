@@ -2,6 +2,8 @@
 let
   cfg = config.services.lemurs;
   sessionData = config.services.displayManager.sessionData.desktops.outPath;
+  settingsFormat = pkgs.formats.toml { };
+  defaultConfig = lib.importTOML ../extra/config.toml;
   inherit (lib)
     mkDefault
     mkEnableOption
@@ -45,6 +47,24 @@ in
           default = "${sessionData}/share/wayland-sessions";
         };
       };
+    };
+
+    extraSettings = mkOption {
+      type = settingsFormat.type;
+      example = lib.literalExpression /*nix*/ ''
+        {
+          do_log = true;
+          cache_path = "/var/cache/lemurs";
+          background = {
+            show_background = true;
+          };
+        }
+      '';
+      default = { };
+      description = ''
+        Extra configuration to be applied to [config.toml](https://github.com/coastalwhite/lemurs/blob/main/extra/config.toml)
+        as a nix attribute set
+      '';
     };
   };
 
