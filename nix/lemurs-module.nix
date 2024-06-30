@@ -132,11 +132,25 @@ in
       tty = "tty${toString (cfg.tty)}";
     in
     lib.mkIf cfg.enable {
-      security.pam.services.lemurs = {
-        allowNullPassword = true;
-        startSession = true;
-        setLoginUid = false;
-        enableGnomeKeyring = mkDefault config.services.gnome.gnome-keyring.enable;
+
+      # security.pam.services.lemurs = {
+      #   allowNullPassword = true;
+      #   startSession = true;
+      #   setLoginUid = false;
+      #   enableGnomeKeyring = mkDefault config.services.gnome.gnome-keyring.enable;
+      # };
+
+      # PAM setup
+      security.pam.services = {
+        lemurs.text = ''
+          auth include login
+          account include login
+          session include login
+          password include login
+        '';
+
+        # See https://github.com/coastalwhite/lemurs/issues/166
+        login.setLoginUid = false;
       };
 
       services.displayManager = {
