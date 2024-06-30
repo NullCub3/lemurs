@@ -161,13 +161,6 @@ in
     in
     lib.mkIf cfg.enable {
 
-      # security.pam.services.lemurs = {
-      #   allowNullPassword = true;
-      #   startSession = true;
-      #   setLoginUid = false;
-      #   enableGnomeKeyring = mkDefault config.services.gnome.gnome-keyring.enable;
-      # };
-
       # PAM setup
       security.pam.services = {
         lemurs.text = ''
@@ -178,7 +171,10 @@ in
         '';
 
         # See https://github.com/coastalwhite/lemurs/issues/166
-        login.setLoginUid = false;
+        login = {
+          setLoginUid = false;
+          enableGnomeKeyring = config.services.gnome.gnome-keyring.enable;
+        };
       };
 
       environment.sessionVariables = {
