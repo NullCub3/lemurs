@@ -1,8 +1,12 @@
 { config, pkgs, lib, ... }:
 let
+  # Module options shortcut
   cfg = config.services.lemurs;
+  # .desktop files for window manaagers/compositors
   sessionData = config.services.displayManager.sessionData.desktops.outPath;
+  # TOML format
   settingsFormat = pkgs.formats.toml { };
+  # Import config.toml as defaultConfig
   defaultConfig = lib.importTOML ../extra/config.toml;
   inherit (lib)
     mkDefault
@@ -13,23 +17,29 @@ let
     ;
 in
 {
-  options.services.lemurs = rec {
-    enable = mkEnableOption "Enable the Lemurs Display Manager";
+  options.services.lemurs = {
+    enable = mkEnableOption "the Lemurs Display Manager";
 
-    x11.enable = mkEnableOption "Enable the X11 part of the Lemurs Display Manager";
-    wayland.enable = mkEnableOption "Enable the Wayland part of the Lemurs Display Manager";
+    x11.enable = mkEnableOption "the X11 part of the Lemurs Display Manager";
+    wayland.enable = mkEnableOption "the Wayland part of the Lemurs Display Manager";
 
     tty = mkOption {
       type = types.int;
       default = 2;
+      description = ''
+        The TTY number that will be used by lemurs
+        This value will be converted into tty''${cfg.tty}
+      '';
     };
 
     shell = mkOption {
       type = types.str;
       default = "${pkgs.bash}/bin/bash";
+      # I wanted to set this to the default shell system-wide
+      # but I wasn't sure of a great way to have that work properly
       # default = config.users.defaultUserShell;
       description = ''
-        The shell that lemurs uses to run commands
+        The shell that lemurs uses
       '';
     };
 
@@ -38,16 +48,25 @@ in
         xauth = mkOption {
           type = with types; nullOr package;
           default = if cfg.x11.enable then pkgs.xorg.xauth else null;
+          description = ''
+            The package used for xauth
+          '';
         };
 
         xorgserver = mkOption {
           type = with types; nullOr package;
           default = if cfg.x11.enable then pkgs.xorg.xorgserver else null;
+          description = ''
+            The package used for xorgserver
+          '';
         };
 
         xsessions = mkOption {
           type = types.path;
           default = "${sessionData}/share/xsessions";
+          description = ''
+            The path to X session .desktop files
+          '';
         };
       };
 
@@ -55,6 +74,9 @@ in
         wayland-sessions = mkOption {
           type = types.path;
           default = "${sessionData}/share/wayland-sessions";
+          description = ''
+            The path to wayland session .desktop files
+          '';
         };
       };
     };
@@ -72,32 +94,42 @@ in
       '';
       default = { };
       description = ''
-        Extra configuration to be applied to [config.toml](https://github.com/coastalwhite/lemurs/blob/main/extra/config.toml)
-        as a nix attribute set
+        Extra configuration to be applied to config.toml as a nix attribute set
+        [lemurs/extra/config.toml](https://github.com/coastalwhite/lemurs/blob/main/extra/config.toml)
       '';
     };
   };
 
   config =
     let
+      # Merge defaultConfig with extraSettings and module options
+      # The priority for options goes
+      # 1. Module options
+      # 2. extraSettings
+      # 3. defaultConfig
+      # Lower numbers (i.e 1) will overwrite settings defined in higher numbers (i.e 3)
       lemursConfig = lib.recursiveUpdate defaultConfig (lib.recursiveUpdate
+        # Nested recursiveUpdate
         (cfg.extraSettings)
         {
+          # Map module options to lemurs' config.toml format
           tty = cfg.tty;
           system_shell = cfg.shell;
           x11 =
+            # Dont add x11 config if x11 isn't enabled
             if cfg.x11.enable then {
               xauth_path = "${cfg.settings.x11.xauth}/bin/xauth";
               xserver_path = "${cfg.settings.x11.xorgserver}/bin/X";
               xsessions_path = cfg.x11.settings.xsessions;
             } else { };
           wayland =
+            # Dont add wayland config if wayland isn't enabled
             if cfg.wayland.enable then {
               wayland_sessions_path = cfg.settings.wayland.wayland-sessions;
             } else { };
         });
 
-      tty = "tty${builtins.toString (cfg.tty)}";
+      tty = "tty${toString (cfg.tty)}";
     in
     lib.mkIf cfg.enable {
       security.pam.services.lemurs = {
@@ -112,10 +144,7 @@ in
       };
 
       environment.etc = {
-        "lemurs/config.toml" = {
-          source = (settingsFormat.generate "lemurs-config.toml" lemursConfig);
-          mode = "0644";
-        };
+        "lemurs/config.toml".source = (settingsFormat.generate "lemurs-config.toml" lemursConfig);
       };
 
       systemd.defaultUnit = "graphical.target";
@@ -138,11 +167,6 @@ in
 
             Conflicts = [
               "getty@${tty}.service"
-            ];
-
-            path = [
-              # pkgs.systemd
-              # pkgs.coreutils
             ];
           };
 
