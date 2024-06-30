@@ -56,6 +56,10 @@ in
       enableGnomeKeyring = mkDefault config.services.gnome.gnome-keyring.enable;
     };
 
+    services.displayManager = {
+      enable = mkDefault true;
+    };
+
     systemd.defaultUnit = "graphical.target";
     systemd.services = {
       "autovt@${cfg.tty}".enable = false;
