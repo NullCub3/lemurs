@@ -52,6 +52,7 @@
         default = pkgs.mkShell {
           packages = with pkgs; [
             pam
+            bash
             nixpkgs-fmt
             rust-bin.stable.latest.default
           ];

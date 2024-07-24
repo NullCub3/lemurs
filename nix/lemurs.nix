@@ -3,6 +3,7 @@
 , pname
 , version
 , rustPlatform
+, bash
 }:
 rustPlatform.buildRustPackage {
   inherit pname version;
@@ -11,6 +12,7 @@ rustPlatform.buildRustPackage {
 
   buildInputs = [
     pam
+    bash
   ];
 
   cargoHash = "sha256-GqIgpDMgXVNtM7SX58ycdOimOqVUbpRqSwprwkfk0d4=";
