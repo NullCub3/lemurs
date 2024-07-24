@@ -1,11 +1,11 @@
 { lib
 , pam
-, packageName
+, pname
+, version
 , rustPlatform
 }:
 rustPlatform.buildRustPackage {
-  name = packageName;
-  # version = "0.3.2";
+  inherit pname version;
 
   src = ./..;
 
@@ -13,7 +13,7 @@ rustPlatform.buildRustPackage {
     pam
   ];
 
-  cargoHash = "sha256-rJLHfedg4y8cZH77AEA4AjE0TvWf9tdSjKiHZfvW+gw=";
+  cargoHash = "sha256-GqIgpDMgXVNtM7SX58ycdOimOqVUbpRqSwprwkfk0d4=";
 
   meta = with lib; {
     description = "A customizable TUI display/login manager written in Rust";
