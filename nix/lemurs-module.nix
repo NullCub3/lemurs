@@ -2,18 +2,22 @@
 let
   # Module options shortcut
   cfg = config.services.lemurs;
+
   # .desktop files for window manaagers/compositors
-  sessionData = config.services.displayManager.sessionData.desktops.outPath;
+  sessionData = config.services.displayManager.sessionData;
+
   # TOML format
   settingsFormat = pkgs.formats.toml { };
+
   # Import config.toml as defaultConfig
-  defaultConfig = lib.importTOML ../extra/config.toml;
+  defaultConfig = lib.importTOML "${pkgs.lemurs.src}/extra/config.toml";
+
+  # Inherit
   inherit (lib)
     mkDefault
     mkEnableOption
     mkOption
     types
-    mkIf
     ;
 in
 {
@@ -72,7 +76,7 @@ in
 
         xsessions = mkOption {
           type = types.path;
-          default = "${sessionData}/share/xsessions";
+          default = "${sessionData.desktops.outPath}/share/xsessions";
           description = ''
             The path to X session .desktop files
           '';
@@ -82,7 +86,7 @@ in
       wayland = {
         wayland-sessions = mkOption {
           type = types.path;
-          default = "${sessionData}/share/wayland-sessions";
+          default = "${sessionData.desktops.outPath}/share/wayland-sessions";
           description = ''
             The path to wayland session .desktop files
           '';
@@ -131,7 +135,7 @@ in
             if cfg.x11.enable then {
               xauth_path = "${cfg.settings.x11.xauth}/bin/xauth";
               xserver_path = "${cfg.settings.x11.xorgserver}/bin/X";
-              xsessions_path = cfg.x11.settings.xsessions;
+              xsessions_path = cfg.settings.x11.xsessions;
             } else { };
           wayland =
             # Dont add wayland config if wayland isn't enabled
@@ -214,17 +218,22 @@ in
           };
 
           serviceConfig = {
-            ExecStart = ''
-              ${pkgs.lemurs}/bin/lemurs \
-                --xsessions  ${cfg.settings.x11.xsessions} \
-                --wlsessions ${cfg.settings.wayland.wayland-sessions}
-            '';
+            ExecStart =
+              let
+                args = lib.cli.toGNUCommandLineShell { } {
+                  xsessions = cfg.settings.x11.xsessions;
+                  wlsessions = cfg.settings.wayland.wayland-sessions;
+                };
+              in
+              "${pkgs.lemurs}/bin/lemurs ${args}";
+
             StandardInput = "tty";
             TTYPath = "/dev/${tty}";
             TTYReset = "yes";
             TTYVHangup = "yes";
             Type = "idle";
           };
+
           restartIfChanged = false;
           wantedBy = [ "graphical.target" ];
         };
