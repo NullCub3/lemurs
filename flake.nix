@@ -25,35 +25,38 @@
       forAllSystems = function: nixpkgs.lib.genAttrs supportedSystems
         (system: function (import nixpkgs {
           inherit system;
-          overlays = [ self.overlay rust-overlay.overlays.default ];
+          overlays = [
+            self.overlays.default
+            rust-overlay.overlays.default
+            (final: prev: {
+              rustPlatform = prev.makeRustPlatform {
+                cargo = final.rust-bin.stable.latest.minimal;
+                rustc = final.rust-bin.stable.latest.minimal;
+              };
+            })
+          ];
         }));
     in
     {
-      overlay = final: prev: {
-        lemurs = self.packages.${final.system}.lemurs;
+      overlays = {
+        default = final: prev: { lemurs = self.packages.${final.system}.lemurs; };
       };
 
-      packages = forAllSystems (pkgs:
-        let
-          rustToolchain = pkgs.rust-bin.stable.latest.default;
-          rustPlatform = pkgs.makeRustPlatform {
-            cargo = rustToolchain;
-            rustc = rustToolchain;
-          };
-        in
-        rec {
-          default = lemurs;
-          lemurs = pkgs.callPackage ./nix/lemurs.nix {
-            inherit pname version rustPlatform;
-          };
-        });
+      formatter = forAllSystems (pkgs: pkgs.nixpkgs-fmt);
+
+      packages = forAllSystems (pkgs: rec {
+        default = lemurs;
+        lemurs = pkgs.callPackage ./nix/lemurs.nix {
+          inherit pname version;
+        };
+      });
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = with pkgs; [
-            pam
             bash
             nixpkgs-fmt
+            pam
             rust-bin.stable.latest.default
           ];
         };
@@ -61,10 +64,7 @@
 
       nixosModules = rec {
         default = lemurs;
-        lemurs.imports = [
-          { nixpkgs.overlays = [ self.overlay ]; }
-          ./nix/lemurs-module.nix
-        ];
+        lemurs = (import ./nix/lemurs-module.nix);
       };
     };
 }
